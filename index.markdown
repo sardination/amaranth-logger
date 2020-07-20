@@ -4,97 +4,137 @@ title: Hours Logger
 permalink: /
 ---
 
+<!--Add buttons to initiate auth sequence and sign out-->
+<button id="authorize_button" style="display: none;">Authorize</button>
+<button id="signout_button" style="display: none;">Sign Out</button>
 
+<pre id="content" style="white-space: pre-wrap;"></pre>
 
 <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
 <script>
-    var GoogleAuth;
-      var SCOPE = 'https://www.googleapis.com/auth/spreadsheets';
+    // Client ID and API key from the Developer Console
+      var CLIENT_ID = '<YOUR_CLIENT_ID>';
+      var API_KEY = '<YOUR_API_KEY>';
+
+      // Array of API discovery doc URLs for APIs used by the quickstart
+      var DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
+
+      // Authorization scopes required by the API; multiple scopes can be
+      // included, separated by spaces.
+      var SCOPES = "https://www.googleapis.com/auth/spreadsheets";
+
+      var authorizeButton = document.getElementById('authorize_button');
+      var signoutButton = document.getElementById('signout_button');
+
+      /**
+       *  On load, called to load the auth2 library and API client library.
+       */
       function handleClientLoad() {
-        // Load the API's client and auth2 modules.
-        // Call the initClient function after the modules load.
         gapi.load('client:auth2', initClient);
       }
 
+      /**
+       *  Initializes the API client library and sets up sign-in state
+       *  listeners.
+       */
       function initClient() {
-        // Retrieve the discovery document for version 3 of Google Drive API.
-        // In practice, your app can retrieve one or more discovery documents.
-        var discoveryUrl = 'https://sheets.googleapis.com/$discovery/rest?version=v4';
-
-        // Initialize the gapi.client object, which app uses to make API requests.
-        // Get API key and client ID from API Console.
-        // 'scope' field specifies space-delimited list of access scopes.
         gapi.client.init({
-            'apiKey': 'AIzaSyAWOjWua0NAp6-kpxpsckRS3jNWD1L60cs',
-            'clientId': '1042655770334-0gqv69apuc35r73ang04fmr42s2msa00.apps.googleusercontent.com',
-            'discoveryDocs': [discoveryUrl],
-            'scope': SCOPE
+          apiKey: API_KEY,
+          clientId: CLIENT_ID,
+          discoveryDocs: DISCOVERY_DOCS,
+          scope: SCOPES
         }).then(function () {
-          GoogleAuth = gapi.auth2.getAuthInstance();
-
           // Listen for sign-in state changes.
-          GoogleAuth.isSignedIn.listen(updateSigninStatus);
+          gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
 
-          // Handle initial sign-in state. (Determine if user is already signed in.)
-          var user = GoogleAuth.currentUser.get();
-          setSigninStatus();
-
-          // Call handleAuthClick function when user clicks on
-          //      "Sign In/Authorize" button.
-          $('#sign-in-or-out-button').click(function() {
-            handleAuthClick();
-          });
-          $('#revoke-access-button').click(function() {
-            revokeAccess();
-          });
+          // Handle the initial sign-in state.
+          updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+          authorizeButton.onclick = handleAuthClick;
+          signoutButton.onclick = handleSignoutClick;
+        }, function(error) {
+          appendPre(JSON.stringify(error, null, 2));
         });
       }
 
-      function handleAuthClick() {
-        if (GoogleAuth.isSignedIn.get()) {
-          // User is authorized and has clicked "Sign out" button.
-          GoogleAuth.signOut();
-        } else {
-          // User is not signed in. Start Google auth flow.
-          GoogleAuth.signIn();
-        }
-      }
-
-      function revokeAccess() {
-        GoogleAuth.disconnect();
-      }
-
-      function setSigninStatus(isSignedIn) {
-        var user = GoogleAuth.currentUser.get();
-        var isAuthorized = user.hasGrantedScopes(SCOPE);
-        if (isAuthorized) {
-          $('#sign-in-or-out-button').html('Sign out');
-          $('#revoke-access-button').css('display', 'inline-block');
-          $('#auth-status').html('You are currently signed in and have granted ' +
-              'access to this app.');
-        } else {
-          $('#sign-in-or-out-button').html('Sign In/Authorize');
-          $('#revoke-access-button').css('display', 'none');
-          $('#auth-status').html('You have not authorized this app or you are ' +
-              'signed out.');
-        }
-      }
-
+      /**
+       *  Called when the signed in status changes, to update the UI
+       *  appropriately. After a sign-in, the API is called.
+       */
       function updateSigninStatus(isSignedIn) {
-        setSigninStatus();
+        if (isSignedIn) {
+          authorizeButton.style.display = 'none';
+          signoutButton.style.display = 'block';
+          listWorkers();
+        } else {
+          authorizeButton.style.display = 'block';
+          signoutButton.style.display = 'none';
+        }
       }
+
+      /**
+       *  Sign in the user upon button click.
+       */
+      function handleAuthClick(event) {
+        gapi.auth2.getAuthInstance().signIn();
+      }
+
+      /**
+       *  Sign out the user upon button click.
+       */
+      function handleSignoutClick(event) {
+        gapi.auth2.getAuthInstance().signOut();
+      }
+
+      /**
+       * Append a pre element to the body containing the given message
+       * as its text node. Used to display the results of the API call.
+       *
+       * @param {string} message Text to be placed in pre element.
+       */
+      function appendPre(message) {
+        var pre = document.getElementById('content');
+        var textContent = document.createTextNode(message + '\n');
+        pre.appendChild(textContent);
+      }
+
+      /**
+       * List workers:
+       * https://docs.google.com/spreadsheets/d/1jbHE1O1VXISaInqUCOd-68XaqDFVT_USHnDNxrpso1M/edit
+       */
+      function listMajors() {
+        gapi.client.sheets.spreadsheets.values.get({
+          spreadsheetId: '1jbHE1O1VXISaInqUCOd-68XaqDFVT_USHnDNxrpso1M',
+          range: 'Entry!A2:E',
+        }).then(function(response) {
+          var range = response.result;
+          if (range.values.length > 0) {
+            appendPre('Name:');
+            var workers = [];
+            for (i = 0; i < range.values.length; i++) {
+                var workername = range.values[i][0];
+                if (!workers.contains(workername)) {
+                    workers.push(workername);
+                }
+              // Print columns A and E, which correspond to indices 0 and 4.
+              // appendPre(row[0]);
+            }
+            for (i = 0; i < workers.length; i++) {
+                appendPre(workers[i]);
+            }
+          } else {
+            appendPre('No data found.');
+          }
+        }, function(response) {
+          appendPre('Error: ' + response.result.error.message);
+        });
+      }
+
+
 </script>
 
-<button id="sign-in-or-out-button"
-        style="margin-left: 25px">Sign In/Authorize</button>
-<button id="revoke-access-button"
-        style="display: none; margin-left: 25px">Revoke access</button>
-
-<div id="auth-status" style="display: inline; padding-left: 25px"></div><hr>
-
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 <script async defer src="https://apis.google.com/js/api.js"
-        onload="this.onload=function(){};handleClientLoad()"
-        onreadystatechange="if (this.readyState === 'complete') this.onload()">
+  onload="this.onload=function(){};handleClientLoad()"
+  onreadystatechange="if (this.readyState === 'complete') this.onload()">
 </script>
+
 
