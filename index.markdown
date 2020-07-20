@@ -13,8 +13,8 @@ permalink: /
 <script type="text/javascript" src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
 <script>
     // Client ID and API key from the Developer Console
-      var CLIENT_ID = '<YOUR_CLIENT_ID>';
-      var API_KEY = '<YOUR_API_KEY>';
+      var CLIENT_ID = '1042655770334-0gqv69apuc35r73ang04fmr42s2msa00.apps.googleusercontent.com';
+      var API_KEY = 'AIzaSyAWOjWua0NAp6-kpxpsckRS3jNWD1L60cs';
 
       // Array of API discovery doc URLs for APIs used by the quickstart
       var DISCOVERY_DOCS = ["https://sheets.googleapis.com/$discovery/rest?version=v4"];
