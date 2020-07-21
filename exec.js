@@ -188,7 +188,7 @@ function createTable() {
   headerActive.appendChild(document.createTextNode('Active'));
   headerRow.appendChild(headerName);
   headerRow.appendChild(headerActive);
-  tableTag.append(headerRow);
+  tableTag.appendChild(headerRow);
   pre.appendChild(tableTag);
 }
 
