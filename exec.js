@@ -129,7 +129,7 @@ function recordTime(event) {
          range: cellAddress,
          valueInputOption: "USER_ENTERED",
          resource: {values: [[now]]}
-      }).then((writeResponse) => {
+      }).then(function(writeResponse) {
         var result = writeResponse.result;
         console.log(`${result.updatedCells} cells updated.`);
         window.location.reload(false);
@@ -141,7 +141,7 @@ function recordTime(event) {
          range: cellAddress,
          valueInputOption: "USER_ENTERED",
          resource: {values: [[today, name, now]]}
-      }).then((writeResponse) => {
+      }).then(function(writeResponse) {
         var result = writeResponse.result;
         console.log(`${result.updatedCells} cells updated.`);
         window.location.reload(true);
