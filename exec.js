@@ -96,7 +96,11 @@ function appendPre(message, tagtype) {
 
 function recordTime(event) {
   var now = new Date();
-  var mins = String(now.getMinutes()).padStart(2, '0');
+  // var mins = String(now.getMinutes()).padStart(2, '0');
+  var mins = String(now.getMinutes());
+  if (mins.length == 1) {
+    mins = `0${mins}`;
+  }
   var hr = now.getHours();
   var today = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
   now = `${hr}:${mins}`;
