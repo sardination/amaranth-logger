@@ -101,20 +101,15 @@ function recordTime(event) {
   var today = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
   now = `${hr}:${mins}`;
 
-  console.log(now);
-  console.log(event);
-  var active = event.path[0].attributes["active"].nodeValue;
+  var active = event.toElement.attributes["active"].nodeValue;
 
-  var name = event.path[0].attributes["workername"].nodeValue;
-  console.log(name);
+  var name = event.toElement.attributes["workername"].nodeValue;
 
   gapi.client.sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
     range: SPREADSHEET_RANGE,
     includeGridData: true
   }).then(function(readResponse) {
-    console.log(readResponse);
-    console.log(today);
     var rows = readResponse.result.values;
     var cellAddress = null;
     var lastRow = START_ROW;
@@ -141,7 +136,6 @@ function recordTime(event) {
       });
     } else {
       cellAddress = `A${lastRow}:${TIME_IN_COL}${lastRow}`;
-      console.log(cellAddress);
       gapi.client.sheets.spreadsheets.values.update({
          spreadsheetId: SPREADSHEET_ID,
          range: cellAddress,
@@ -210,7 +204,6 @@ function listWorkers() {
     var mm = String(today.getMonth() + 1)
     var yyyy = today.getFullYear();
     today = mm + '/' + dd + '/' + yyyy;
-    console.log(today);
 
     var range = response.result;
     if (range.values.length > 0) {
