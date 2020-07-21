@@ -2,7 +2,8 @@
 var CLIENT_ID = '1042655770334-0gqv69apuc35r73ang04fmr42s2msa00.apps.googleusercontent.com';
 var API_KEY = 'AIzaSyAWOjWua0NAp6-kpxpsckRS3jNWD1L60cs';
 var SPREADSHEET_ID = '1jbHE1O1VXISaInqUCOd-68XaqDFVT_USHnDNxrpso1M';
-var SPREADSHEET_RANGE = 'Entry!A2:E';
+var SPREADSHEET_ENTRY_RANGE = 'Entry!A2:E';
+var SPREADSHEET_WORKER_RANGE = "'Current Workers'";
 var START_ROW = 2;
 var TIME_IN_COL = 'C';
 var TIME_OUT_COL = 'D';
@@ -111,7 +112,7 @@ function recordTime(event) {
 
   gapi.client.sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: SPREADSHEET_RANGE,
+    range: SPREADSHEET_ENTRY_RANGE,
     includeGridData: true
   }).then(function(readResponse) {
     var rows = readResponse.result.values;
@@ -199,39 +200,52 @@ function createTable() {
 function listWorkers() {
   gapi.client.sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: SPREADSHEET_RANGE,
-  }).then(function(response) {
+    range: SPREADSHEET_WORKER_RANGE,
+  }).then(function(workerSheetResponse) {
     createTable();
 
-    var today = new Date();
-    var dd = String(today.getDate())
-    var mm = String(today.getMonth() + 1)
-    var yyyy = today.getFullYear();
-    today = mm + '/' + dd + '/' + yyyy;
+    var workerRows = workerSheetResponse.result.values;
+    var workers = [];
+    var workerInfo = {};
+    for (i = 0; i < workerRows.length; i++) {
+      var name = workerRows[i][0];
+      workers.push(name);
+      workerInfo[name] = {
+        'date': "",
+        'timeIn': "",
+        'timeOut': ""
+      }
+    }
+    workers.sort();
 
-    var range = response.result;
-    if (range.values.length > 0) {
-      // appendPre('Name:', 'p');
-      var workerInfo = {};
-      for (i = 0; i < range.values.length; i++) {
-        var thisRow = range.values[i];
+    gapi.client.sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: SPREADSHEET_ENTRY_RANGE,
+    }).then(function(entrySheetResponse) {
+
+      var today = new Date();
+      var dd = String(today.getDate())
+      var mm = String(today.getMonth() + 1)
+      var yyyy = today.getFullYear();
+      today = mm + '/' + dd + '/' + yyyy;
+
+      var entryRows = entrySheetResponse.result.values;
+      for (i = 0; i < entryRows.length; i++) {
+        var thisRow = entryRows[i];
         var date = thisRow[0]
         var workerName = thisRow[1];
         var timeIn = thisRow[2];
         var timeOut = thisRow[3];
 
-        if (workerName != "") {
+        if (workers.includes(workerName)) {
           workerInfo[workerName] = {
             'date': date,
             'timeIn': timeIn,
             'timeOut': timeOut
           };
         }
-        // Print columns A and E, which correspond to indices 0 and 4.
-        // appendPre(row[0]);
       }
-      var workers = Object.keys(workerInfo);
-      workers.sort()
+
       for (i = 0; i < workers.length; i++) {
           // appendPre(workers[i], 'button');
           var name = workers[i];
@@ -245,9 +259,7 @@ function listWorkers() {
           }
           createRow(workers[i], active);
       }
-    } else {
-      appendPre('No data found.');
-    }
+    });
   }, function(response) {
     appendPre('Error: ' + response.result.error.message);
   });
